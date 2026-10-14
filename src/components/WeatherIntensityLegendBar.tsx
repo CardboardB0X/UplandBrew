@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WeatherData, WeatherMeshMode } from '../types/venue';
-import { CloudRain, CloudFog, Flame, ThermometerSnowflake } from 'lucide-react';
+import { CloudRain, CloudFog, Flame, ThermometerSnowflake, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface WeatherIntensityLegendBarProps {
   weather: WeatherData;
   mode?: WeatherMeshMode;
   onModeChange?: (mode: WeatherMeshMode) => void;
   className?: string;
+  defaultMinimized?: boolean;
 }
 
 interface LegendConfig {
@@ -92,113 +93,147 @@ export const WeatherIntensityLegendBar: React.FC<WeatherIntensityLegendBarProps>
   mode = 'mist',
   onModeChange,
   className = '',
+  defaultMinimized = false,
 }) => {
+  const [isMinimized, setIsMinimized] = useState<boolean>(defaultMinimized);
   const config = computeLegendConfig(weather, mode);
 
   return (
     <div className={`pointer-events-auto select-none transition-all duration-300 ${className}`}>
-      <div className="px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/60 dark:border-zinc-800 shadow-glass text-zinc-800 dark:text-zinc-100 max-w-sm sm:max-w-md w-full">
-        {/* Segmented Mode Selector Options: Precipitation | Mist | Heat */}
-        {onModeChange && (
-          <div className="flex items-center gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl mb-2 border border-zinc-200/50 dark:border-zinc-700/50">
-            <button
-              type="button"
-              onClick={() => onModeChange('precipitation')}
-              className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
-                mode === 'precipitation'
-                  ? 'bg-sky-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-            >
-              <CloudRain className="w-3.5 h-3.5" />
-              <span>Precipitation</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('mist')}
-              className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
-                mode === 'mist'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-            >
-              <CloudFog className="w-3.5 h-3.5" />
-              <span>Mist</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('heat')}
-              className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
-                mode === 'heat'
-                  ? 'bg-orange-500 text-white shadow-sm'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5" />
-              <span>Heat</span>
-            </button>
-          </div>
-        )}
-
-        {/* Header Row: Mode & Active Telemetry */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-              {config.icon}
-            </div>
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold truncate block tracking-tight">
+      <div className="px-3 py-2 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/60 dark:border-zinc-800 shadow-glass text-zinc-800 dark:text-zinc-100 max-w-sm sm:max-w-md w-full">
+        {/* Minimized Quick Capsule */}
+        {isMinimized ? (
+          <button
+            type="button"
+            onClick={() => setIsMinimized(false)}
+            className="w-full flex items-center justify-between gap-2 text-left"
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                {config.icon}
+              </div>
+              <span className="text-[11px] font-bold truncate">
                 {config.modeName}
               </span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="font-mono text-[10px] font-extrabold text-sky-600 dark:text-sky-400">
-              {config.activeReading}
-            </span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${config.badgeBg}`}>
-              {config.statusBadge}
-            </span>
-          </div>
-        </div>
-
-        {/* The Intensity Gradient Line Bar Track with Sliding Indicator Needle */}
-        <div className="relative w-full h-2 rounded-full overflow-visible my-1.5">
-          {/* Multi-stop gradient line */}
-          <div
-            className="w-full h-full rounded-full shadow-inner border border-black/10 dark:border-white/10"
-            style={{ background: config.gradientStyle }}
-          />
-
-          {/* Dynamic Active Indicator Needle / Pip */}
-          <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none transition-all duration-500 ease-out z-10"
-            style={{ left: `${config.currentPercentage}%` }}
-          >
-            <div className="relative flex items-center justify-center">
-              <div className="w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-900 border-2 border-zinc-900 dark:border-white shadow-md ring-2 ring-sky-500/40" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="font-mono text-[10px] font-extrabold text-sky-600 dark:text-sky-400">
+                {config.activeReading}
+              </span>
+              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${config.badgeBg}`}>
+                {config.statusBadge}
+              </span>
+              <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
             </div>
-          </div>
-        </div>
+          </button>
+        ) : (
+          <>
+            {/* Header with collapse button */}
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  {config.icon}
+                </div>
+                <span className="text-[11px] font-bold truncate block tracking-tight">
+                  {config.modeName}
+                </span>
+              </div>
 
-        {/* Legend Scale Ticks */}
-        <div className="flex justify-between items-center text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 pt-0.5">
-          {config.ticks.map((tick, idx) => (
-            <span
-              key={idx}
-              className={
-                idx === 0
-                  ? 'text-left text-rose-500 font-bold'
-                  : idx === config.ticks.length - 1
-                  ? 'text-right text-sky-500 font-bold'
-                  : 'text-center'
-              }
-            >
-              {tick}
-            </span>
-          ))}
-        </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="font-mono text-[10px] font-extrabold text-sky-600 dark:text-sky-400">
+                  {config.activeReading}
+                </span>
+                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${config.badgeBg}`}>
+                  {config.statusBadge}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMinimized(true)}
+                  title="Minimize legend"
+                  className="p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Segmented Mode Selector Options: Precipitation | Mist | Heat */}
+            {onModeChange && (
+              <div className="flex items-center gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl mb-2 border border-zinc-200/50 dark:border-zinc-700/50">
+                <button
+                  type="button"
+                  onClick={() => onModeChange('precipitation')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    mode === 'precipitation'
+                      ? 'bg-sky-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <CloudRain className="w-3.5 h-3.5" />
+                  <span>Precipitation</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onModeChange('mist')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    mode === 'mist'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <CloudFog className="w-3.5 h-3.5" />
+                  <span>Mist</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onModeChange('heat')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    mode === 'heat'
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+                  }`}
+                >
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>Heat</span>
+                </button>
+              </div>
+            )}
+
+            {/* The Intensity Gradient Line Bar Track with Sliding Indicator Needle */}
+            <div className="relative w-full h-2 rounded-full overflow-visible my-1.5">
+              <div
+                className="w-full h-full rounded-full shadow-inner border border-black/10 dark:border-white/10"
+                style={{ background: config.gradientStyle }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none transition-all duration-500 ease-out z-10"
+                style={{ left: `${config.currentPercentage}%` }}
+              >
+                <div className="relative flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-900 border-2 border-zinc-900 dark:border-white shadow-md ring-2 ring-sky-500/40" />
+                </div>
+              </div>
+            </div>
+
+            {/* Legend Scale Ticks */}
+            <div className="flex justify-between items-center text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 pt-0.5">
+              {config.ticks.map((tick, idx) => (
+                <span
+                  key={idx}
+                  className={
+                    idx === 0
+                      ? 'text-left text-rose-500 font-bold'
+                      : idx === config.ticks.length - 1
+                      ? 'text-right text-sky-500 font-bold'
+                      : 'text-center'
+                  }
+                >
+                  {tick}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

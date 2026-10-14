@@ -7,6 +7,7 @@ import {
   IndangBarangay,
   MapTypeOption,
   RadarFrameInfo,
+  RouteGeometry,
   ScoredVenue,
   WeatherData,
   WeatherMeshMode,
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [isDrawerExpanded, setIsDrawerExpanded] = useState<boolean>(false);
   const [isPlaceCardDismissed, setIsPlaceCardDismissed] = useState<boolean>(false);
+  const [activeRoute, setActiveRoute] = useState<RouteGeometry | null>(null);
 
   // 4. Gallery & Media Modal State
   const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
@@ -531,7 +533,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden font-sans antialiased text-zinc-900 dark:text-zinc-100 select-none">
+    <main className="relative w-full h-screen h-[100dvh] overflow-hidden font-sans antialiased text-zinc-900 dark:text-zinc-100 select-none">
       {/* 1. Atmospheric Upland Fog Mist & Rain Probability Overlay */}
       <AtmosphericFogOverlay
         weather={activeWeatherTelemetry}
@@ -592,6 +594,7 @@ export const App: React.FC = () => {
         weatherMeshMode={weatherMeshMode}
         onChangeWeatherMeshMode={setWeatherMeshMode}
         isMobileDetailExpanded={isDrawerExpanded}
+        onRouteCalculated={setActiveRoute}
       />
 
       {/* 5. Middle-Low Google Maps-Style Selected Place Card */}
@@ -605,11 +608,15 @@ export const App: React.FC = () => {
           onSelectPrev={handleSelectPrevVenue}
           onSelectNext={handleSelectNextVenue}
           userDistanceKm={activeVenueDistanceKm}
-          onClose={() => setIsPlaceCardDismissed(true)}
+          onClose={() => {
+            setIsPlaceCardDismissed(true);
+            setActiveRoute(null);
+          }}
           isFavorite={favorites.includes(activeVenue.id)}
           onToggleFavorite={handleToggleFavorite}
           onOpenGallery={handleOpenGallery}
           onShare={handleShareVenue}
+          route={activeRoute}
         />
       )}
 

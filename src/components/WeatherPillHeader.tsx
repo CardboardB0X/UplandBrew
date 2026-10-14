@@ -126,16 +126,16 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none px-3 pt-3 sm:px-5 sm:pt-4">
-      <div className="max-w-2xl mx-auto flex flex-col gap-2">
+    <header className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none px-2.5 pt-safe pt-2.5 sm:px-5 sm:pt-4">
+      <div className="max-w-2xl mx-auto flex flex-col gap-1.5 sm:gap-2">
         {/* Top Floating Telemetry & Simulator Launcher Pill */}
         <div className="pointer-events-auto relative">
-          <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-white/60 dark:border-zinc-800/80 rounded-2xl shadow-glass px-3 py-2 flex items-center justify-between gap-2.5 transition-all">
+          <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-white/60 dark:border-zinc-800/80 rounded-2xl shadow-glass px-2.5 py-1.5 sm:px-3 sm:py-2 flex items-center justify-between gap-2 sm:gap-2.5 transition-all">
             {/* Left: Weather Condition & Live Telemetry Stepper */}
             <button
               type="button"
               onClick={() => setShowSimulatorMenu((prev) => !prev)}
-              className="flex items-center gap-2.5 text-left group min-w-0 flex-1"
+              className="flex items-center gap-2 sm:gap-2.5 text-left group min-w-0 flex-1 active:scale-[0.99] transition-transform"
               title="Tap to switch Indang microclimate scenario telemetry"
             >
               <span className="relative flex h-2.5 w-2.5 shrink-0">
@@ -327,26 +327,27 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
 
           {/* 5-Hour Microclimate Forecast Timeline Strip */}
           {weather.hourly_forecast && weather.hourly_forecast.length > 0 && (
-            <div className="mt-1.5 px-3 py-1.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/50 dark:border-zinc-800/80 shadow-xs flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 shrink-0 mr-1">
-                <Radio className="w-3 h-3 text-sky-500" />
-                <span>Next 5h Forecast:</span>
+            <div className="mt-1 px-2.5 py-1 sm:py-1.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/50 dark:border-zinc-800/80 shadow-xs flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 shrink-0 mr-0.5 sm:mr-1">
+                <Radio className="w-3 h-3 text-sky-500 animate-pulse" />
+                <span className="hidden sm:inline">Next 5h Forecast:</span>
+                <span className="sm:hidden text-[9px] font-bold text-zinc-400">5h:</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 {weather.hourly_forecast.slice(0, 5).map((point, i) => (
                   <div
                     key={`${point.hour}-${point.timeLabel}`}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded-xl text-[10px] font-semibold shrink-0 transition-colors ${
+                    className={`flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-xl text-[9px] sm:text-[10px] font-semibold shrink-0 transition-colors ${
                       i === 0
                         ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold border border-sky-400/30'
                         : 'text-zinc-600 dark:text-zinc-300 bg-zinc-100/60 dark:bg-zinc-800/60'
                     }`}
                   >
-                    <span className="font-mono text-[9px] text-zinc-400">{point.timeLabel}</span>
-                    <span className="text-xs">{point.icon}</span>
+                    <span className="font-mono text-[8px] sm:text-[9px] text-zinc-400">{point.timeLabel}</span>
+                    <span className="text-[11px] sm:text-xs">{point.icon}</span>
                     <span className="font-bold">{point.temp_c}°</span>
                     {point.rain_probability_pct > 0 && (
-                      <span className="text-[9px] text-sky-600 dark:text-sky-400 font-mono">
+                      <span className="text-[8px] sm:text-[9px] text-sky-600 dark:text-sky-400 font-mono">
                         {point.rain_probability_pct}%
                       </span>
                     )}
@@ -366,14 +367,15 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search spots, Liberica, study hubs, Wi-Fi, Kayquit..."
-              className="w-full pl-9 pr-9 py-2 rounded-2xl bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl border border-white/60 dark:border-zinc-800/80 shadow-glass text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
+              className="w-full pl-9 pr-9 py-2 rounded-2xl bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl border border-white/60 dark:border-zinc-800/80 shadow-glass text-[16px] sm:text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
-                className="absolute right-3 p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="absolute right-2.5 p-1.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
                 title="Clear search"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -382,14 +384,17 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
         </div>
 
         {/* Horizontal Category Filters & Barangay Selectors */}
-        <div className="pointer-events-auto -mx-3 px-3 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-1.5 pb-1">
+        <div
+          className="pointer-events-auto -mx-2.5 sm:-mx-3 px-2.5 sm:px-3 overflow-x-auto no-scrollbar touch-pan-x"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div className="flex items-center gap-1 sm:gap-1.5 pb-0.5">
             {/* Favorites Fast Filter Chip */}
             {favoritesCount > 0 && (
               <button
                 type="button"
                 onClick={() => onSelectFilter('favorites')}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border backdrop-blur-xl ${
+                className={`shrink-0 inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all duration-200 border backdrop-blur-xl ${
                   activeFilter === 'favorites'
                     ? 'bg-rose-500 text-white border-rose-400 shadow-md scale-[1.02]'
                     : 'bg-white/85 dark:bg-zinc-900/85 text-zinc-700 dark:text-zinc-300 border-white/50 dark:border-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 shadow-sm'
@@ -408,7 +413,7 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
                   key={chip.id}
                   type="button"
                   onClick={() => onSelectFilter(chip.id)}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 border backdrop-blur-xl ${
+                  className={`shrink-0 inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all duration-200 border backdrop-blur-xl ${
                     isActive
                       ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-md scale-[1.02]'
                       : 'bg-white/85 dark:bg-zinc-900/85 text-zinc-700 dark:text-zinc-300 border-white/50 dark:border-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 shadow-sm'
@@ -430,7 +435,7 @@ export const WeatherPillHeader: React.FC<WeatherPillHeaderProps> = ({
                   key={bgy}
                   type="button"
                   onClick={() => onSelectBarangay(bgy)}
-                  className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all border backdrop-blur-xl ${
+                  className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-semibold transition-all border backdrop-blur-xl ${
                     isActive
                       ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
                       : 'bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 border-white/40 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-800'

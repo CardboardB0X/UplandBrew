@@ -27,6 +27,7 @@ export const VenueGalleryModal: React.FC<VenueGalleryModalProps> = ({
   const [activeTab, setActiveTab] = useState<'photos' | 'menu'>(initialTab);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
@@ -42,14 +43,30 @@ export const VenueGalleryModal: React.FC<VenueGalleryModalProps> = ({
       ? menu
       : menu.filter((m) => m.category === selectedCategory);
 
-  const handlePrevPhoto = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePrevPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
-  const handleNextPhoto = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNextPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setPhotoIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    if (deltaX > 40) {
+      handlePrevPhoto();
+    } else if (deltaX < -40) {
+      handleNextPhoto();
+    }
+    setTouchStartX(null);
   };
 
   return (
@@ -57,11 +74,11 @@ export const VenueGalleryModal: React.FC<VenueGalleryModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={`${venue.name} Gallery and Menu`}
-      className="fixed inset-0 z-[1200] flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[1200] flex items-center justify-center p-2.5 sm:p-5 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 pb-safe"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 border border-white/60 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 select-none"
+        className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 border border-white/60 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] max-h-[88dvh] animate-in zoom-in-95 duration-200 select-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
@@ -124,7 +141,11 @@ export const VenueGalleryModal: React.FC<VenueGalleryModalProps> = ({
           {activeTab === 'photos' ? (
             /* Photos Tab: Interactive Carousel & Grid */
             <div className="space-y-4">
-              <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+              <div
+                className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-zinc-900 shadow-md touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 <img
                   src={photos[photoIndex].url}
                   alt={photos[photoIndex].caption}

@@ -62,59 +62,28 @@ export const IsobaricMistMeshLayer: React.FC<IsobaricMistMeshLayerProps> = ({
     if (!ctx) return;
 
     let isRunning = true;
+    let isMoving = false;
     const startTime = performance.now();
+    let lastRenderTime = 0;
 
-    const resize = () => {
+    // Cache projected coordinates so we don't re-project on every RAF frame
+    let cachedPerimeter: { x: number; y: number }[] = [];
+    let cachedBounds = { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, centerX: 0, centerY: 0 };
+
+    const updateProjections = () => {
       const size = map.getSize();
       if (canvas.width !== size.x || canvas.height !== size.y) {
         canvas.width = size.x;
         canvas.height = size.y;
       }
-    };
-    resize();
 
-    map.on('resize', resize);
-    map.on('move', resize);
-
-    const render = (now: number) => {
-      if (!isRunning) return;
-
-      resize();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (!meshEnabled) {
-        animFrameIdRef.current = requestAnimationFrame(render);
-        return;
-      }
-
-      const elapsed = (now - startTime) * 0.001;
-      const currentZoom = map.getZoom();
-
-      // Atmospheric weight scaler
-      const intensityFactor = Math.max(
-        0.45,
-        Math.min(
-          1.1,
-          (weather.fog_index / 100) * 0.45 +
-            (weather.rain_probability_pct / 100) * 0.35 +
-            (weather.rain_mm > 0 ? 0.30 : 0.0)
-        )
-      );
-      const effectiveAlpha = intensityFactor * opacityMultiplier;
-
-      // Project Indang municipal perimeter onto screen coordinates
-      const perimeterPoints = INDANG_MUNICIPAL_PERIMETER.map((coord) =>
+      cachedPerimeter = INDANG_MUNICIPAL_PERIMETER.map((coord) =>
         map.latLngToContainerPoint(coord)
       );
 
-      // Bounding box of Indang on screen
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
-
-      for (let i = 0; i < perimeterPoints.length; i++) {
-        const pt = perimeterPoints[i];
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (let i = 0; i < cachedPerimeter.length; i++) {
+        const pt = cachedPerimeter[i];
         if (pt.x < minX) minX = pt.x;
         if (pt.y < minY) minY = pt.y;
         if (pt.x > maxX) maxX = pt.x;
@@ -123,16 +92,57 @@ export const IsobaricMistMeshLayer: React.FC<IsobaricMistMeshLayerProps> = ({
 
       const width = maxX - minX;
       const height = maxY - minY;
-      const centerX = minX + width * 0.5;
-      const centerY = minY + height * 0.5;
+      cachedBounds = {
+        minX,
+        minY,
+        maxX,
+        maxY,
+        width,
+        height,
+        centerX: minX + width * 0.5,
+        centerY: minY + height * 0.5,
+      };
+    };
+
+    updateProjections();
+
+    const onMoveStart = () => { isMoving = true; };
+    const onMoveEnd = () => { isMoving = false; updateProjections(); };
+
+    map.on('resize', updateProjections);
+    map.on('move', updateProjections);
+    map.on('movestart', onMoveStart);
+    map.on('moveend', onMoveEnd);
+
+    const render = (now: number) => {
+      if (!isRunning) return;
+
+      // Throttle to ~36fps for mobile thermal and battery efficiency (28ms between frames)
+      if (now - lastRenderTime < 28) {
+        animFrameIdRef.current = requestAnimationFrame(render);
+        return;
+      }
+      lastRenderTime = now;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!meshEnabled || cachedPerimeter.length === 0) {
+        animFrameIdRef.current = requestAnimationFrame(render);
+        return;
+      }
+
+      const elapsed = (now - startTime) * 0.001;
+      const currentZoom = map.getZoom();
+      const { minX, minY, maxX, maxY, width, height, centerX, centerY } = cachedBounds;
+      const effectiveAlpha = Math.min(1.0, Math.max(0.1, opacityMultiplier));
 
       ctx.save();
 
       // STRICT GEOGRAPHIC CLIPPING: Paint strictly inside Indang
       ctx.beginPath();
-      for (let i = 0; i < perimeterPoints.length; i++) {
-        if (i === 0) ctx.moveTo(perimeterPoints[i].x, perimeterPoints[i].y);
-        else ctx.lineTo(perimeterPoints[i].x, perimeterPoints[i].y);
+      for (let i = 0; i < cachedPerimeter.length; i++) {
+        if (i === 0) ctx.moveTo(cachedPerimeter[i].x, cachedPerimeter[i].y);
+        else ctx.lineTo(cachedPerimeter[i].x, cachedPerimeter[i].y);
       }
       ctx.closePath();
       ctx.clip();
@@ -295,8 +305,10 @@ export const IsobaricMistMeshLayer: React.FC<IsobaricMistMeshLayerProps> = ({
     return () => {
       isRunning = false;
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
-      map.off('resize', resize);
-      map.off('move', resize);
+      map.off('resize', updateProjections);
+      map.off('move', updateProjections);
+      map.off('movestart', onMoveStart);
+      map.off('moveend', onMoveEnd);
     };
   }, [map, meshEnabled, weather, opacityMultiplier, mapType, isDark, mode]);
 

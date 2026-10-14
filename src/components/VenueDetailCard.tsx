@@ -22,7 +22,7 @@ import {
   Images,
   TrendingUp,
 } from 'lucide-react';
-import { ScoredVenue } from '../types/venue';
+import { RouteGeometry, ScoredVenue } from '../types/venue';
 import { getTierBadgeStyle } from '../utils/scoring';
 import {
   GlassDomeIcon,
@@ -46,6 +46,7 @@ interface VenueDetailCardProps {
   onToggleFavorite?: (venueId: string) => void;
   onOpenGallery?: (venue: ScoredVenue) => void;
   onShare?: (venue: ScoredVenue) => void;
+  route?: RouteGeometry | null;
 }
 
 export const VenueDetailCard: React.FC<VenueDetailCardProps> = ({
@@ -62,7 +63,33 @@ export const VenueDetailCard: React.FC<VenueDetailCardProps> = ({
   onToggleFavorite,
   onOpenGallery,
   onShare,
+  route,
 }) => {
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchEndY - touchStartY;
+    // Swipe UP by at least 40px -> expand
+    if (deltaY < -40) {
+      if (!isExpanded) onToggleExpand();
+    }
+    // Swipe DOWN by at least 45px -> collapse if expanded, or close if already collapsed
+    else if (deltaY > 45) {
+      if (isExpanded) {
+        onToggleExpand();
+      } else if (onClose) {
+        onClose();
+      }
+    }
+    setTouchStartY(null);
+  };
+
   const tierStyle = getTierBadgeStyle(venue.color_tier);
 
   const indoorPct = Math.round(venue.indoor_ac_ratio * 100);
@@ -78,17 +105,22 @@ export const VenueDetailCard: React.FC<VenueDetailCardProps> = ({
   return (
     <section
       aria-label="Selected Venue Details"
-      className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 lg:left-[calc(50%+210px)] z-[1000] pointer-events-none px-3 sm:px-4 w-full max-w-lg lg:max-w-xl transition-all duration-300"
+      className="fixed bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 lg:left-[calc(50%+210px)] z-[1000] pointer-events-none px-2.5 sm:px-4 w-full max-w-lg lg:max-w-xl transition-all duration-300 pb-safe"
     >
       <div className="w-full pointer-events-auto">
         <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white/60 dark:border-zinc-800 rounded-3xl shadow-2xl shadow-black/25 overflow-hidden transition-all duration-300 max-h-[85vh] flex flex-col">
-          {/* Top Drag / Status Header Bar */}
-          <div className="w-full pt-2.5 pb-1 px-4 flex flex-col items-center select-none">
+          {/* Top Drag / Status Header Bar with Touch Gestures */}
+          <div
+            className="w-full pt-2.5 pb-1 px-4 flex flex-col items-center select-none cursor-grab active:cursor-grabbing touch-none"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <div
               role="button"
               tabIndex={0}
               onClick={onToggleExpand}
-              className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700 mb-1.5 cursor-pointer hover:bg-zinc-400 dark:hover:bg-zinc-600 transition-colors"
+              className="w-12 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700 mb-1.5 cursor-pointer hover:bg-zinc-400 dark:hover:bg-zinc-600 transition-colors"
+              aria-label={isExpanded ? 'Collapse card' : 'Expand card'}
             />
             <div className="w-full flex items-center justify-between text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
               <span className="inline-flex items-center gap-1.5">
@@ -213,6 +245,25 @@ export const VenueDetailCard: React.FC<VenueDetailCardProps> = ({
                           : `${venue.distance_from_cvsu_km} km from CvSU`}
                       </span>
                     </div>
+
+                    {/* Embedded Real-Time Route Travel Time Pill */}
+                    {route && (
+                      <div className="mt-1.5 inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-xs font-semibold">
+                        <span className="flex items-center gap-1 text-sky-700 dark:text-sky-300 font-bold">
+                          <Car className="w-3.5 h-3.5" />
+                          <span>{route.drivingMinutes} min drive</span>
+                        </span>
+                        <span className="text-zinc-400">•</span>
+                        <span className="font-mono text-zinc-600 dark:text-zinc-300 text-[11px]">
+                          {route.distanceKm.toFixed(1)} km
+                        </span>
+                        <span className="text-zinc-400">•</span>
+                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[11px]">
+                          <Footprints className="w-3 h-3" />
+                          <span>{route.walkingMinutes} min walk</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Universal Match Score Badge */}

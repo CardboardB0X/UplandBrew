@@ -66,6 +66,7 @@ interface WeatherMapProps {
   weatherMeshMode?: WeatherMeshMode;
   onChangeWeatherMeshMode?: (mode: WeatherMeshMode) => void;
   isMobileDetailExpanded?: boolean;
+  onRouteCalculated?: (route: RouteGeometry | null) => void;
 }
 
 /**
@@ -261,6 +262,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
   weatherMeshMode: externalMeshMode,
   onChangeWeatherMeshMode,
   isMobileDetailExpanded = false,
+  onRouteCalculated,
 }) => {
   const [internalMeshMode, setInternalMeshMode] = useState<WeatherMeshMode>('mist');
   const activeMeshMode = externalMeshMode ?? internalMeshMode;
@@ -288,6 +290,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
     let isMounted = true;
     if (!selectedVenue) {
       setRoute(null);
+      onRouteCalculated?.(null);
       return;
     }
     const destCoords: [number, number] = [selectedVenue.lat, selectedVenue.lng];
@@ -298,6 +301,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         const geo = await fetchRouteGeometry(userCoords, destCoords);
         if (isMounted) {
           setRoute(geo);
+          onRouteCalculated?.(geo);
           setIsRouteLoading(false);
         }
       } catch {
@@ -535,10 +539,11 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         weather={weather}
         mode={activeMeshMode}
         onModeChange={handleMeshModeChange}
-        className={`fixed right-3 sm:right-5 z-[940] max-w-[320px] sm:max-w-[340px] w-[calc(100vw-24px)] transition-all duration-300 ${
+        defaultMinimized={Boolean(selectedVenue)}
+        className={`fixed right-2.5 sm:right-5 z-[940] max-w-[320px] sm:max-w-[340px] w-[calc(100vw-20px)] sm:w-auto transition-all duration-300 ${
           selectedVenue
-            ? 'bottom-[200px] sm:bottom-[210px] lg:bottom-5'
-            : 'bottom-4 sm:bottom-5'
+            ? 'bottom-[205px] sm:bottom-[215px] lg:bottom-5'
+            : 'bottom-3 sm:bottom-5'
         } ${
           isMobileDetailExpanded
             ? 'opacity-0 pointer-events-none -translate-y-2 lg:opacity-100 lg:pointer-events-auto lg:translate-y-0'
@@ -547,9 +552,13 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
       />
 
       {/* Floating Map Controls & Zoom Toolbar (Right Side) */}
-      <div className="fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-[950] flex flex-col gap-2.5">
-        {/* Zoom In/Out Buttons with Smooth Level Readout */}
-        <div className="flex flex-col gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-2xl shadow-glass overflow-hidden p-1">
+      <div
+        className={`fixed right-2.5 sm:right-5 top-1/2 -translate-y-1/2 z-[950] flex flex-col gap-2 sm:gap-2.5 transition-all duration-300 ${
+          isMobileDetailExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        {/* Zoom In/Out Buttons with Smooth Level Readout (Hidden on Mobile where pinch-to-zoom is native) */}
+        <div className="hidden sm:flex flex-col gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-2xl shadow-glass overflow-hidden p-1">
           <button
             type="button"
             onClick={() =>
@@ -589,9 +598,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onClick={() => setShowLayersModal(true)}
           title="Map Types, Radar & Density Controls"
           aria-label="Map Layers and Type Switcher"
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-90 transition-all"
         >
-          <Layers className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
         </button>
 
         {/* 2. Toggle Weather Mesh FAB (Replaces Toggle Radar FAB) */}
@@ -604,7 +613,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               : 'Show Isobaric Weather Mesh (Mist, Heat, Rain)'
           }
           aria-label="Toggle Weather Mesh"
-          className={`relative w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 ${
+          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all duration-300 active:scale-90 ${
             showMicroclimateZones
               ? 'bg-sky-500 text-white border-sky-300 shadow-pill-radar scale-105'
               : 'bg-white/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-200 border-white/50 dark:border-zinc-800 shadow-glass hover:scale-105'
@@ -613,7 +622,7 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           {showMicroclimateZones && (
             <span className="absolute inset-0 rounded-full bg-sky-400 animate-radar-pulse pointer-events-none" />
           )}
-          <Waves className="w-5 h-5 relative z-10" />
+          <Waves className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
         </button>
 
         {/* 3. Recenter GPS FAB */}
@@ -626,9 +635,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
               : 'Recenter on CvSU / Indang Center'
           }
           aria-label="Recenter GPS"
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-90 transition-all"
         >
-          <LocateFixed className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+          <LocateFixed className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400" />
         </button>
 
         {/* 4. Reset Indang Bounds Overview FAB */}
@@ -637,17 +646,17 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
           onClick={handleResetIndangOverview}
           title="Reset to Full Indang Municipal Boundary"
           aria-label="Reset Indang Overview"
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 shadow-glass hover:scale-105 active:scale-90 transition-all"
         >
-          <Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
         </button>
       </div>
 
       {/* Live Meteorological Mesh Status Pill */}
       {showMicroclimateZones && (
-        <div className="fixed left-3 sm:left-5 lg:left-[460px] top-32 z-[900] pointer-events-none transition-all">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/85 text-slate-100 backdrop-blur-xl border border-white/20 shadow-lg text-[11px] font-medium">
-            <Waves className="w-3.5 h-3.5 text-sky-400" />
+        <div className="fixed left-2.5 sm:left-5 lg:left-[460px] top-28 sm:top-32 z-[900] pointer-events-none transition-all">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-slate-900/85 text-slate-100 backdrop-blur-xl border border-white/20 shadow-lg text-[10px] sm:text-[11px] font-medium">
+            <Waves className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-sky-400" />
             <span>
               Weather Mesh: <strong className="capitalize">{activeMeshMode}</strong> • {Math.round(fogDensity * 100)}% Opacity
             </span>
@@ -655,9 +664,9 @@ export const WeatherMap: React.FC<WeatherMapProps> = ({
         </div>
       )}
 
-      {/* Floating Route Travel Time Preview Pill */}
+      {/* Floating Route Travel Time Preview Pill (Desktop Only; on mobile, embedded in VenueDetailCard to prevent search bar overlap) */}
       {selectedVenue && route && (
-        <div className="fixed top-28 sm:top-24 left-1/2 -translate-x-1/2 lg:left-[calc(50%+210px)] z-[950] pointer-events-none transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+        <div className="hidden md:inline-flex fixed top-24 left-[calc(50%+210px)] z-[950] pointer-events-none transition-all duration-300 animate-in fade-in slide-in-from-top-2">
           <div className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 dark:bg-white/95 text-white dark:text-zinc-900 shadow-xl backdrop-blur-xl border border-white/20 dark:border-black/10 text-xs font-semibold">
             <span className="flex items-center gap-1 text-sky-400 dark:text-sky-600 font-bold">
               <Car className="w-3.5 h-3.5" />

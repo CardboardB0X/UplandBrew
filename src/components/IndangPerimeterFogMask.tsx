@@ -40,30 +40,23 @@ export const IndangPerimeterFogMask: React.FC<IndangPerimeterFogMaskProps> = ({
     INDANG_MUNICIPAL_PERIMETER[0],
   ];
 
-  // Render a subtle, clean feathered atmospheric boundary vignette
+  // Render a subtle, clean feathered atmospheric boundary vignette on map move/resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let isRunning = true;
+    let isMounted = true;
 
-    const resize = () => {
+    const render = () => {
+      if (!isMounted || !canvas) return;
       const size = map.getSize();
       if (canvas.width !== size.x || canvas.height !== size.y) {
         canvas.width = size.x;
         canvas.height = size.y;
       }
-    };
-    resize();
 
-    map.on('resize', resize);
-    map.on('move', resize);
-
-    const render = () => {
-      if (!isRunning) return;
-      resize();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const perimeterPoints = INDANG_MUNICIPAL_PERIMETER.map((coord) =>
@@ -88,7 +81,7 @@ export const IndangPerimeterFogMask: React.FC<IndangPerimeterFogMaskProps> = ({
 
       // Delicate inner boundary feather with soft luminous glow
       ctx.shadowColor = isDark ? '#38BDF8' : '#0284C7';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 8;
       ctx.lineWidth = 3;
       ctx.strokeStyle = isDark
         ? 'rgba(56, 189, 248, 0.35)'
@@ -96,17 +89,19 @@ export const IndangPerimeterFogMask: React.FC<IndangPerimeterFogMaskProps> = ({
       ctx.stroke();
 
       ctx.restore();
-
-      animFrameIdRef.current = requestAnimationFrame(render);
     };
 
-    animFrameIdRef.current = requestAnimationFrame(render);
+    render();
+
+    map.on('resize', render);
+    map.on('move', render);
+    map.on('zoomend', render);
 
     return () => {
-      isRunning = false;
-      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
-      map.off('resize', resize);
-      map.off('move', resize);
+      isMounted = false;
+      map.off('resize', render);
+      map.off('move', render);
+      map.off('zoomend', render);
     };
   }, [map, isDark]);
 

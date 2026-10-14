@@ -32,8 +32,8 @@ export const AtmosphericFogOverlay: React.FC<AtmosphericFogOverlayProps> = ({
         />
       )}
 
-      {/* Floating Fog & Atmospheric Status Capsule */}
-      <div className="fixed bottom-20 left-3 sm:left-5 lg:bottom-5 lg:left-5 z-[920] pointer-events-auto">
+      {/* Floating Fog & Atmospheric Status Capsule (Desktop only; on mobile it is in the top header) */}
+      <div className="hidden lg:block fixed bottom-5 left-5 z-[920] pointer-events-auto">
         <button
           type="button"
           onClick={onToggleFog}

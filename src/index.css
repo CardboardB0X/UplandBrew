@@ -19,14 +19,30 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
-/* Ensure Leaflet tiles render smoothly with custom markers */
+/* Ensure Leaflet tiles render smoothly with custom markers & native touch */
 .leaflet-container {
   height: 100%;
   width: 100%;
   font-family: inherit;
   background-color: #f1f5f9;
+  touch-action: pan-x pan-y pinch-zoom;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Safe area padding utilities for mobile notched displays & home indicators */
+@supports (padding: max(0px)) {
+  .pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
 }
 
 /* Custom DivIcon container without default leaflet styles */
@@ -36,3 +52,4 @@ html, body, #root {
   background: transparent !important;
   border: none !important;
 }
+
